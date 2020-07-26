@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+bitcask
 
 # Test binary, built with `go test -c`
 *.test

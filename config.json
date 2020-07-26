@@ -1,0 +1,7 @@
+{
+  "host": "localhost",
+  "port": 9876,
+  "pidfile": "/usr/local/var/run/bitcask.pid",
+  "data_directory": "/usr/local/var/bitcask",
+  "data_filesize": 1
+}
