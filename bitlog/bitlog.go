@@ -1,4 +1,32 @@
+// Package bitlog implements data structure and functions
+// to manage Bitcask log files. By log files it means the
+// files contains data represent both running log and data,
+// which is how Bitcask is designed.
 package bitlog
+
+// The following code was sourced and modified from the
+// https://github.com/Panda-Home/go-bitcask package
+// governed by the following license:
+//
+// Copyright (c) 2020 Panda-Home
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 import (
 	"errors"
@@ -13,6 +41,7 @@ import (
 	"github.com/Panda-Home/bitcask/utils"
 )
 
+// Logger ...
 type Logger struct {
 	Dirpath string
 	MaxSize int // megabytes
@@ -26,6 +55,7 @@ type Logger struct {
 
 const megabyte = 1024 * 1024
 
+// NewLogger ...
 func NewLogger(dirpath string, maxSize int) (*Logger, error) {
 	if len(dirpath) == 0 {
 		return nil, errors.New("Filename cannot be empty")
@@ -52,6 +82,7 @@ func NewLogger(dirpath string, maxSize int) (*Logger, error) {
 	return l, nil
 }
 
+// Write outputs given byte array to active file.
 func (l *Logger) Write(b []byte) (n int, err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -70,17 +101,19 @@ func (l *Logger) Write(b []byte) (n int, err error) {
 	return n, err
 }
 
+// Close ...
 func (l *Logger) Close() {
 	l.fileHandler.Close()
 }
 
 // SeekLog moves file handler to given pos relative to
-// the origin of the file
+// the origin of the file.
 func (l *Logger) SeekLog(pos int64) error {
 	_, err := l.fileHandler.Seek(pos, 0)
 	return err
 }
 
+// ActiveFilepath returns the path to active log file.
 func (l *Logger) ActiveFilepath() string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -88,6 +121,8 @@ func (l *Logger) ActiveFilepath() string {
 	return l.filepath
 }
 
+// ActiveFilePos returns the current position of
+// active file.
 func (l *Logger) ActiveFilePos() int64 {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -115,15 +150,14 @@ func (l *Logger) openFile() error {
 		l.fileHandler = f
 		l.curFilePos = 0
 		return nil
-	} else {
-		f, err := os.OpenFile(l.filepath, os.O_APPEND|os.O_RDWR, 0644)
-		if err != nil {
-			return fmt.Errorf("Can't open logfile: %s", err)
-		}
-		l.fileHandler = f
-		l.curFilePos = info.Size()
-		return nil
 	}
+	f, err := os.OpenFile(l.filepath, os.O_APPEND|os.O_RDWR, 0644)
+	if err != nil {
+		return fmt.Errorf("Can't open logfile: %s", err)
+	}
+	l.fileHandler = f
+	l.curFilePos = info.Size()
+	return nil
 }
 
 func (l *Logger) rotate() error {
@@ -143,7 +177,7 @@ func (l *Logger) rotate() error {
 	return nil
 }
 
-// returns the file max size in bytes
+// maxSize returns the file's max allowed size in bytes.
 func (l *Logger) maxSize() int64 {
 	return int64(l.MaxSize) * megabyte
 }
