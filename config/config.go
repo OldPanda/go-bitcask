@@ -35,11 +35,12 @@ import (
 // BitcaskConfig is the configuration file used by Bitcask
 // in json format.
 type BitcaskConfig struct {
-	Host     string `json:"hostname"`
-	Port     int    `json:"port"`
-	PidFile  string `json:"pidfile"`
-	DataDir  string `json:"data_directory"`
-	DataSize int    `json:"data_filesize"` // data file rotate size in MB
+	Host      string `json:"hostname"`
+	Port      int    `json:"port"`
+	PidFile   string `json:"pidfile"`
+	DataDir   string `json:"data_directory"`
+	DataSize  int    `json:"data_filesize_in_mb"`        // data file rotate size in MB
+	MergeFreq int    `json:"merge_frequency_in_seconds"` // in seconds
 }
 
 // NewBitcaskConfig reads the config file and converts its content
@@ -59,6 +60,10 @@ func NewBitcaskConfig(configFile string) (*BitcaskConfig, error) {
 	var c BitcaskConfig
 	if err = json.Unmarshal(content, &c); err != nil {
 		return nil, fmt.Errorf("Not valid json: %s", err)
+	}
+
+	if c.MergeFreq == 0 {
+		c.MergeFreq = 3600 // by default run merge process every hour
 	}
 	return &c, nil
 }

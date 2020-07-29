@@ -84,9 +84,15 @@ func (dir *KeyDir) GetValue(key []byte) (*KeyDirEntry, error) {
 
 // DelKeydirEntry ...
 func (dir *KeyDir) DelKeydirEntry(key []byte) error {
-	if _, ok := dir.dataMap[string(key)]; ok {
+	if dir.HasKey(key) {
 		delete(dir.dataMap, string(key))
 		return nil
 	}
 	return fmt.Errorf("Key not found: %s", key)
+}
+
+// HasKey ...
+func (dir *KeyDir) HasKey(key []byte) bool {
+	_, ok := dir.dataMap[string(key)]
+	return ok
 }

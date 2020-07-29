@@ -35,6 +35,7 @@ import (
 	"syscall"
 
 	"github.com/Panda-Home/bitcask/config"
+	"github.com/Panda-Home/bitcask/merger"
 	"github.com/Panda-Home/bitcask/server"
 )
 
@@ -64,12 +65,18 @@ func main() {
 		log.Fatalf("Failed to create server: %s", err)
 	}
 
+	merger, err := merger.NewMerger(c, s)
+	if err != nil {
+		log.Fatalf("Failed to create merger: %s", err)
+	}
+
 	done := make(chan interface{})
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-signals
 		s.Stop()
+		merger.Stop()
 		cleanup(c)
 		close(done)
 	}()

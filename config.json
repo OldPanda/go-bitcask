@@ -3,5 +3,6 @@
   "port": 9876,
   "pidfile": "/usr/local/var/run/bitcask.pid",
   "data_directory": "/usr/local/var/bitcask",
-  "data_filesize": 1
+  "data_filesize_in_mb": 1,
+  "merge_frequency_in_seconds": 10
 }

@@ -40,6 +40,7 @@ import (
 	"github.com/Panda-Home/bitcask/bitlog"
 	"github.com/Panda-Home/bitcask/config"
 	"github.com/Panda-Home/bitcask/data"
+	"github.com/Panda-Home/bitcask/utils"
 )
 
 var (
@@ -79,7 +80,7 @@ func NewServer(c *config.BitcaskConfig) (*Server, error) {
 	s.listener = l
 
 	s.keyDir = data.NewKeyDir() // in-memory structure initialization
-	logFile, err := bitlog.NewLogger(c.DataDir, c.DataSize)
+	logFile, err := bitlog.NewLogger(c.DataDir, c.DataSize, false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,12 +104,35 @@ func (s *Server) Stop() {
 	s.wg.Wait()
 }
 
+// UpdateKeyDir ...
+func (s *Server) UpdateKeyDir(key []byte, fileID string, valuePos int64, valueSize uint32, ts uint64) error {
+	value, err := s.keyDir.GetValue(key)
+	if value != nil {
+		fmt.Println("In record", value.FileID, value.Timestamp)
+	}
+	if err == nil && value.Timestamp > ts {
+		// no need to update since server has the latest version of value
+		return nil
+	}
+	if err := s.keyDir.SetEntryFromKeyValue(key, fileID, valuePos, valueSize, ts); err != nil {
+		return fmt.Errorf("Failed to update keydir: %s", err)
+	}
+	return nil
+}
+
+// GetActiveFile ...
+func (s *Server) GetActiveFile() string {
+	return s.logFile.ActiveFilepath()
+}
+
 // Build KeyDir structure from existing log files
 func (s *Server) loadExistingLog() error {
 	files, err := ioutil.ReadDir(s.logFile.Dirpath)
 	if err != nil {
 		return err
 	}
+
+	utils.SortLogFiles(files)
 
 	for _, f := range files {
 		if f.IsDir() {

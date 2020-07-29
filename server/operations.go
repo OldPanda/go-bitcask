@@ -61,6 +61,10 @@ func (s *Server) Del(key []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if !s.keyDir.HasKey(key) {
+		return fmt.Errorf("Key not found: %s", key)
+	}
+
 	// Set nil value in file
 	err := s.setKeyValue(key, []byte(nil))
 	if err != nil {
@@ -85,14 +89,12 @@ func (s *Server) setKeyValue(key, value []byte) error {
 		return err
 	}
 
-	curPos := s.logFile.ActiveFilePos()
-	s.keyDir.SetEntryFromByteArray(s.logFile.ActiveFilepath(), curPos, entryBytes)
 	_, err = s.logFile.Write(entryBytes)
 	if err != nil {
-		s.keyDir.DelKeydirEntry(key) // remove the new added key
-		s.logFile.SeekLog(curPos)    // move the file handler back to original pos
 		return fmt.Errorf("Failed set key value pair: %s", err)
 	}
+	curPos := s.logFile.ActiveFilePos() - int64(len(entryBytes))
+	s.keyDir.SetEntryFromByteArray(s.logFile.ActiveFilepath(), curPos, entryBytes)
 
 	return nil
 }
