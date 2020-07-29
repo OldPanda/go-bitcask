@@ -49,6 +49,7 @@ type Logger struct {
 	filepath    string
 	fileHandler *os.File
 	curFilePos  int64
+	isMerge     bool // to tell if this is to build merged files
 
 	mu sync.Mutex
 }
@@ -56,7 +57,7 @@ type Logger struct {
 const megabyte = 1024 * 1024
 
 // NewLogger ...
-func NewLogger(dirpath string, maxSize int) (*Logger, error) {
+func NewLogger(dirpath string, maxSize int, isMerge bool) (*Logger, error) {
 	if len(dirpath) == 0 {
 		return nil, errors.New("Filename cannot be empty")
 	}
@@ -67,12 +68,14 @@ func NewLogger(dirpath string, maxSize int) (*Logger, error) {
 	l := &Logger{
 		Dirpath: dirpath,
 		MaxSize: maxSize,
+		isMerge: isMerge,
 	}
-	availableFile, err := l.findLatestAvailableFile()
-	if err != nil {
-		l.filepath = l.newFilepath()
-	} else {
-		l.filepath = availableFile
+	l.filepath = l.newFilepath()
+	if !l.isMerge {
+		availableFile, _ := l.findLatestAvailableFile()
+		if availableFile != "" {
+			l.filepath = availableFile
+		}
 	}
 
 	if err := l.openFile(); err != nil {
@@ -130,10 +133,24 @@ func (l *Logger) ActiveFilePos() int64 {
 	return l.curFilePos
 }
 
+// GetFileTS returns the timestamp suffix of given log file
+func (l *Logger) GetFileTS(filePath string) (uint64, error) {
+	components := strings.Split(filePath, ".")
+	tsPart := components[len(components)-1]
+	i, err := strconv.Atoi(tsPart)
+	if err != nil {
+		return 0, fmt.Errorf("Not a valid integer: %s", err)
+	}
+	return uint64(i), nil
+}
+
 func (l *Logger) newFilepath() string {
 	ts := utils.MakeTimestampInMS()
 	tsStr := strconv.FormatUint(ts, 10)
-	return filepath.Join(l.Dirpath, "data.bit."+tsStr)
+	if !l.isMerge {
+		return filepath.Join(l.Dirpath, "data.bit."+tsStr)
+	}
+	return filepath.Join(l.Dirpath, "data.bit.merged."+tsStr)
 }
 
 func (l *Logger) openFile() error {
@@ -182,6 +199,9 @@ func (l *Logger) maxSize() int64 {
 	return int64(l.MaxSize) * megabyte
 }
 
+// Find the unmerged log file with latest timestamp, and
+// check if it reaches the max size. The file will be used
+// as active file if it doesn't.
 func (l *Logger) findLatestAvailableFile() (string, error) {
 	files, err := ioutil.ReadDir(l.Dirpath)
 	if err != nil {
@@ -194,7 +214,8 @@ func (l *Logger) findLatestAvailableFile() (string, error) {
 	for i := len(files) - 1; i >= 0; i-- {
 		f := files[i]
 		_, filename := filepath.Split(f.Name())
-		if strings.HasPrefix(filename, "data.bit.") {
+		if strings.HasPrefix(filename, "data.bit.") &&
+			!strings.HasPrefix(filename, "data.bit.merged.") {
 			if f.Size() >= l.maxSize() {
 				return "", nil
 			}

@@ -27,6 +27,8 @@ package utils
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -45,4 +47,21 @@ func GetFileSize(filename string) (int64, error) {
 // MakeTimestampInMS returns timestamp in milliseconds
 func MakeTimestampInMS() uint64 {
 	return uint64(time.Now().UnixNano() / 1e6)
+}
+
+// SortLogFiles sorts given log files in specific order
+// with making sure merged files are always placed ahead
+// of normal log files
+func SortLogFiles(files []os.FileInfo) {
+	sort.Slice(files, func(i, j int) bool {
+		if strings.Index(files[i].Name(), "merged") != -1 && strings.Index(files[j].Name(), "merged") != -1 {
+			return files[i].Name() < files[j].Name()
+		} else if strings.Index(files[i].Name(), "merged") != -1 && strings.Index(files[j].Name(), "merged") == -1 {
+			return true
+		} else if strings.Index(files[i].Name(), "merged") == -1 && strings.Index(files[j].Name(), "merged") != -1 {
+			return false
+		} else {
+			return files[i].Name() < files[j].Name()
+		}
+	})
 }
