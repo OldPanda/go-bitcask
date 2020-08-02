@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	emptyKey   = make([]byte, 0)
-	emptyValue = make([]byte, 0)
-	fakeKey    = []byte("foo")
-	fakeValue  = []byte("bar")
-	filePath   = "/tmp/bitcask_test.bit"
+	emptyKey      = make([]byte, 0)
+	emptyValue    = make([]byte, 0)
+	fakeKey       = []byte("foo")
+	fakeValue     = []byte("bar")
+	entryFilePath = "/tmp/bitcask_entry_test.bit"
 )
 
 func Test_NewEntry(t *testing.T) {
@@ -60,7 +60,7 @@ func Test_LoadFromFile(t *testing.T) {
 	prepareFile()
 	defer cleanupFile()
 
-	f, _ := os.OpenFile(filePath, os.O_RDONLY, 0644)
+	f, _ := os.OpenFile(entryFilePath, os.O_RDONLY, 0644)
 	entry, err := LoadFromFile(f, int64(0))
 	assert.Nil(t, err, "Expected no error")
 	assert.Equal(t, fakeKey, entry.Key, fmt.Sprintf("Expected key: %s, got: %s", fakeKey, entry.Key))
@@ -92,11 +92,11 @@ func prepareFile() {
 	entry, _ := NewEntry(fakeKey, fakeValue)
 	bytes, _ := entry.Dump()
 
-	f, _ := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	f, _ := os.OpenFile(entryFilePath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	defer f.Close()
 	f.Write(bytes)
 }
 
 func cleanupFile() {
-	os.Remove(filePath)
+	os.Remove(entryFilePath)
 }
