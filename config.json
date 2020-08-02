@@ -4,5 +4,5 @@
   "pidfile": "/usr/local/var/run/bitcask.pid",
   "data_directory": "/usr/local/var/bitcask",
   "data_filesize_in_mb": 1,
-  "merge_frequency_in_seconds": 10
+  "merge_frequency_in_seconds": 3600
 }
