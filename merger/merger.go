@@ -1,22 +1,5 @@
 package merger
 
-import (
-	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/Panda-Home/bitcask/bitlog"
-	"github.com/Panda-Home/bitcask/config"
-	"github.com/Panda-Home/bitcask/data"
-	"github.com/Panda-Home/bitcask/server"
-	"github.com/Panda-Home/bitcask/utils"
-)
-
 // The following code was sourced and modified from the
 // https://github.com/Panda-Home/go-bitcask package
 // governed by the following license:
@@ -40,6 +23,23 @@ import (
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/Panda-Home/bitcask/bitlog"
+	"github.com/Panda-Home/bitcask/config"
+	"github.com/Panda-Home/bitcask/data"
+	"github.com/Panda-Home/bitcask/server"
+	"github.com/Panda-Home/bitcask/utils"
+)
 
 type Merger struct {
 	dirPath   string
