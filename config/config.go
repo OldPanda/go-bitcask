@@ -35,7 +35,7 @@ import (
 // BitcaskConfig is the configuration file used by Bitcask
 // in json format.
 type BitcaskConfig struct {
-	Host      string `json:"hostname"`
+	Host      string `json:"host"`
 	Port      int    `json:"port"`
 	PidFile   string `json:"pidfile"`
 	DataDir   string `json:"data_directory"`
